@@ -4,7 +4,7 @@ namespace RefreshToken.Api.Services
 {
     public class CookieService : ICookieService
     {
-        private readonly int days = 30;
+        private readonly int seconds = 5;
         private readonly IConfiguration _configuration;
 
         public CookieService(IConfiguration configuration)
@@ -12,7 +12,7 @@ namespace RefreshToken.Api.Services
             _configuration = configuration;
         }
 
-        public void AppendCookie(HttpResponse response, string value)
+        public void AppendCookies(HttpResponse response, string value, string userName)
         {
             response.Cookies.Append(_configuration["CookieName"] ?? "token", value, new CookieOptions
             {
@@ -20,8 +20,22 @@ namespace RefreshToken.Api.Services
                 Secure = false,
                 SameSite = SameSiteMode.Lax,
                 Path = "/",
-                MaxAge = TimeSpan.FromDays(days)
+                MaxAge = TimeSpan.FromSeconds(seconds)
             });
+
+            string refreshToken = Guid.NewGuid().ToString();
+            response.Cookies.Append(_configuration["RefreshCookieName"] ?? "token",
+                refreshToken, 
+                new CookieOptions
+                {
+                    HttpOnly = true,
+                    Secure = false,
+                    SameSite = SameSiteMode.Lax,
+                    Path = "/",
+                    MaxAge = TimeSpan.FromDays(1)
+                });
+
+            RefreshTokenStore.Tokens[userName] = refreshToken;
         }
 
         public void RemoveCookie(HttpRequest request, HttpResponse response)

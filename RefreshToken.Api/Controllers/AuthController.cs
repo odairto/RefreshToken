@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using RefreshToken.Api.Entities;
 using RefreshToken.Api.Interfaces;
-using RefreshToken.Api.Services;
 
 namespace RefreshToken.Api.Controllers
 {
@@ -29,11 +28,43 @@ namespace RefreshToken.Api.Controllers
             if (user != null)
             {
                 var jwtToken = _authenticationService.GenerateJwtToken(user);
-                _cookieService.AppendCookie(Response, jwtToken);
+                _cookieService.AppendCookies(Response, jwtToken, login.UserName);
                 return Ok();
 
             }
             return Unauthorized();
+        }
+
+        [HttpPost("refresh")]
+        public IActionResult Refresh()
+        {
+            var refreshToken = Request.Cookies["refreshToken"];
+            if (string.IsNullOrEmpty(refreshToken))
+                return Unauthorized("Refresh token não encontrado.");
+
+            var userId = _refreshTokenService.GetUserIdByToken(refreshToken); // Supõe que você tem um método assim
+
+            if (userId == null)
+                return Unauthorized("Refresh token inválido.");
+
+            //var user = _userService.GetById(userId); // Você pode ajustar conforme seu serviço
+
+            //if (user == null)
+            //    return Unauthorized("Usuário não encontrado.");
+
+            // Novo JWT
+            var jwtToken = _authenticationService.GenerateJwtToken(user);
+            _cookieService.AppendCookie(Response, jwtToken);
+
+            // (Opcional) Gerar novo refresh token
+            var newRefreshToken = _refreshTokenService.GenerateAndStore(user.Id);
+            Response.Cookies.Append("refreshToken", newRefreshToken, new CookieOptions
+            {
+                HttpOnly = true,
+                Expires = DateTimeOffset.UtcNow.AddDays(7)
+            });
+
+            return Ok("Token renovado com sucesso.");
         }
 
         //// GET: AuthController/Edit/5

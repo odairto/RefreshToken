@@ -2,7 +2,7 @@
 {
     public interface ICookieService
     {
-        void AppendCookie(HttpResponse response, string value);
+        void AppendCookies(HttpResponse response, string value, string userName);
 
         void RemoveCookie(HttpRequest request, HttpResponse response);
     }

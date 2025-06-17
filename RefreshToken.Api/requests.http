@@ -1,0 +1,14 @@
+@baseUrl = http://localhost:5219/api
+
+### GET
+GET {{baseUrl}}/home
+
+### POST
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "UserName": "admin",
+  "Password": "admin"
+}
+
